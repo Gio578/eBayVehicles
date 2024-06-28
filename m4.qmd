@@ -1,0 +1,449 @@
+---
+title: "Final Paper"
+date: "`r Sys.Date()`"
+author:
+  - Giovanni Rivera
+format:
+  html:
+    toc: true
+    embed-resources: true
+---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(
+  message=FALSE
+)
+```
+
+# Obtaining the data
+
+```{r}
+#| label: obtainingData
+if (!require(data.table)) {
+  install.packages("data.table")
+  library(data.table)
+}
+df <- fread("vehicles.csv")
+```
+
+# Data Dictionary
+
+| position | name         | description                       |
+|---------:|:-------------|:----------------------------------|
+|        1 | id           | entry ID                          |
+|        2 | url          | listing URL                       |
+|        3 | region       | craigslist region                 |
+|        4 | region_url   | region URL                        |
+|        5 | price        | entry price                       |
+|        6 | year         | entry year                        |
+|        7 | manufacturer | manufacturer of vehicle           |
+|        8 | model        | model of vehicle                  |
+|        9 | condition    | condition of vehicle              |
+|       10 | cylinders    | number of cylinders               |
+|       11 | fuel         | fuel type                         |
+|       12 | odometer     | miles traveled by vehicle         |
+|       13 | title_status | title status of vehicle           |
+|       14 | transmission | transmission of vehicle           |
+|       15 | vin          | vehicle identification number     |
+|       16 | drive        | type of drive                     |
+|       17 | size         | size of vehicle                   |
+|       18 | type         | generic type of vehicle           |
+|       19 | paint_color  | color of vehicle                  |
+|       20 | image_url    | image URL                         |
+|       21 | description  | listed description of vehicle     |
+|       22 | county       | useless column left in by mistake |
+|       23 | state        | state of listing                  |
+|       24 | lat          | latitude of listing               |
+|       25 | long         | longitude of listing              |
+|       26 | posting_date | date of craigslist listing        |
+
+: Columns in the vehicles data set
+
+# Data Description
+
+## Part 1: Numerical Description
+
+```{r}
+names(df)
+```
+
+```{r}
+library(tidyverse)
+df <- df |> select(-lat,-long,-id,-url,-region_url,-VIN)
+```
+
+```{r}
+names(df)
+```
+
+```{r}
+str(df)
+```
+
+```{r}
+df$state <-as.factor(df$state)
+```
+
+```{r}
+str(df)
+```
+
+Manufactures & Paint Color
+
+This contingency table demonstrates the frequencies of colors for each vehicle, by manufacturer.
+
+Additionally, it further highlights the most popular colors being white and black across all manufacturers.
+
+```{r}
+with(df,addmargins(table(paint_color,manufacturer)))
+```
+
+Title Status and Contion
+
+This contingency table demonstrates the frequencies of title status's of each vehicle based on their condition.
+
+A vehicle's title status could directly correlate and be impacted by its condition. The most common title status is a clean status followed by a rebuilt status.
+
+```{r}
+with(df,addmargins(table(condition,title_status)))
+```
+
+Title Status and State
+
+This contingency table demonstrates the frequency of title status's by State.
+
+Across all states the most common title status's are clean and rebuilt.
+
+```{r}
+with(df,addmargins(table(state,title_status)))
+```
+
+```{r}
+library(tidyverse)
+df <- df[df$price<100000&df$price>0,]
+dfd<-df |> select("price", "cylinders", "odometer", "size", "manufacturer")
+dfd$size<-as.factor(dfd$size)
+dfd$price<-as.factor(dfd$price)
+dfd$odometer<-as.factor(dfd$odometer)
+dfd$cylinders<-as.factor(dfd$cylinders)
+
+
+```
+
+Summary of price ranging from 1 to 99999.
+
+```{r}
+df$price <- as.integer(df$price)
+summary(df$price)
+```
+
+Before sorting the price range to be between 0 and 100000 the outrageously high prices dragged the mean above the median, however on setting a price range, the mean is now closer to the median and they provide a certain amount of accuracy.The mean here is 18709 and the median is 15000.
+
+Stem plot of odometer.
+
+```{r}
+dfd$odometer<- as.numeric(dfd$odometer)
+stem(dfd$odometer[1:100])
+```
+
+Count of cylinders
+
+```{r}
+dfd |> count(cylinders,sort=TRUE)
+```
+
+This representation shows that majority of the users did not fill in an answer for cylinders, however of those that did, "6 cylinders" are the most popular.
+
+Contingency table between manufacturer and cylinders.
+
+```{r}
+dfA<- subset (df, manufacturer %in% c("ford", "honda", "toyota", "chevrolet", "nissan"))
+dfB<- subset (dfA, cylinders %in% c("10 cylinders", "12 cylinders", "3 cylinders", "4 cylinders", "5 cylinders","6 cylinders", "8 cylinders"))
+tbl<- table(dfA$manufacturer, dfA$cylinders)
+addmargins(tbl)
+```
+
+On observing the cylinders of the most popular manufacturers, we can see that chevrolet and ford have 8 cylinders as their most produced whereas honda, nissan, and toyota have 4 cylinders as their most produced.
+
+Contingency table between size and manufacturer.
+
+```{r}
+dfX<- subset (df, size %in% c("compact", "full-size", "mid-size", "sub-compact"))
+dfY<- subset (dfX, manufacturer %in% c("ford", "honda", "toyota", "chevrolet", "nissan"))
+tbl<- table(dfY$size, dfY$manufacturer)
+addmargins(tbl)
+```
+
+The entire data set has too many manufacturers to clearly analyze the data so I've chosen 5 of the most popular manufacturers. On short-listing the most popular manufacturers and comparing their respective sizes, it is clear to see that the most popular size in Chevrolet, Ford, and Toyota is "full-size" whereas in Honda and Nissan it is "mid-size" .
+
+Number of vehicles from each year
+
+```{r}
+df |> count(year,sort=TRUE)
+```
+
+Number of Vehicles from each manufacturer
+
+```{r}
+df |> count(manufacturer,sort=TRUE)
+```
+
+Number of Vehicles from each model
+
+```{r}
+df |> count(model,sort=TRUE)
+```
+
+Number of Vehicles from each type of drive
+
+```{r}
+df |> count(drive,sort=TRUE)
+```
+
+contingency table comparing manufacturers and drive of vehicles
+
+```{r}
+with(df,table(manufacturer,drive)) 
+```
+
+contingency table comparing year and drive of vehicles
+
+```{r}
+with(df,table(year,drive)) 
+```
+
+statistical summary of year
+
+```{r}
+with(df,summary(year))
+```
+
+```{r}
+library(tidyverse)
+library(MASS)
+library(pander)
+```
+
+```{r}
+pander(addmargins(with(df,table(type,fuel))))
+pander(addmargins(with(df,table(type,transmission))))
+pander(addmargins(with(df,table(transmission,fuel))))
+```
+
+## Part 2: Visual Description
+
+**Title Status and Condition Bar Chart**
+
+This bar chart demonstrates the count of title status's for all vehicles which is disproportionately a clean title status, additionally it also demonstrates the condition of the vehicle.
+
+```{r}
+df_bar <- ggplot(data = df, aes(title_status, fill = condition))
+df_bar + 
+  geom_bar(stat = "count") + 
+  scale_fill_brewer() +
+  scale_y_continuous(labels = scales::number_format(scale = 1e6, accuracy = 0.1, suffix = "M")) 
+```
+
+**Manufacturer and Paint Color**
+
+Demonstrates the relationship between a vehicle's manufacturer and the vehicle's paint color. The most common types of relationships are a vehicle being manufactured by Ford and being the color white, a vehicle being manufactured by Chevrolet and being the color white, and a vehicle being manufactured by Ford and being the color black.
+
+```{r}
+dfX_manufacturer<- subset(df, manufacturer %in% c("chevrolet", "ford", "honda", "nissan"))
+dfY_manufacturer<- subset(dfX_manufacturer, paint_color %in% c("white", "black", "silver", "red"))
+```
+
+```{r}
+g_manufacturer <- ggplot(data = dfY_manufacturer, aes(manufacturer, paint_color))
+g_manufacturer + geom_count()
+```
+
+**Title Status and State**
+
+Demonstrates the title status of the top three states with the highest number of vehicles. The vehicles title statuses are overwhelmingly a clean title status.
+
+```{r}
+dfX_state<- subset (df, state %in% c("tx", "ca", "fl"))
+dfY_state<- subset (dfX_state, title_status %in% c("clean", "lien", "missing", "rebuilt", "salvage"))
+
+df_state <- ggplot(data = dfY_state, aes(state,fill=title_status))
+df_state + geom_bar(stat = "count") + scale_fill_brewer()
+```
+
+**Number of Vehicles from each year**
+
+This is a visualization in the form of a stem plot of the number of vehicles from each year. Evidently, year the most cars are from is 2017 with 36420 cars.
+
+```{r}
+stem(df$year)
+```
+
+**Type of Model Visualization**
+
+This is a visualization in the form of a stem plot of the type of model of each vehicle. The model with the most cars is F-150 with 8009 cars.
+
+```{r}
+df$model<-as.numeric(df$model)
+stem(df$model)
+```
+
+**Vehicle manufacturer and drive of the cars**
+
+This is a visualization in the form of a stacked bar chart comparing vehicle manufacturer and drive of the cars in the data set for the top manufacturers .
+
+```{r}
+dfmanufacturerx <- subset(df, manufacturer %in% c("ford", "honda", "chevrolet", "nissan", "toyota"))
+```
+
+```{r}
+ggplot(data = dfmanufacturerx, aes(x = manufacturer, fill = drive)) + 
+    geom_bar(stat = "count")
+```
+
+**Comparing vehicle manufacturer and model**
+
+This is a visualization in the form of a stacked bar chart comparing vehicle manufacturer and model of the cars in the data set.
+
+```{r}
+df$model<-as.factor(df$model)
+ggplot(data = df, aes(manufacturer, fill = model)) + 
+    geom_bar(stat = "count")
+```
+
+**Comparing vehicle year and drive**
+
+This is a visualization in the form of a stacked bar chart comparing vehicle year and drive of the cars in the data set.
+
+```{r}
+ggplot(data = df, aes(x = year, fill = drive)) + 
+    geom_bar(stat = "count")
+```
+
+**Manufacturer and Price**
+
+These are bar graphs showing the relationship between manufacturer and total price, and manufacturer and average price.
+
+```{r}
+df <- df[df$price<500000&df$price>500,]
+df<- subset (df, manufacturer %in% c("ford", "honda", "toyota", "chevrolet", "nissan"))
+df$price<-as.numeric(df$price)
+options(scipen=999)
+f <- ggplot(df,aes(manufacturer,price))
+f + geom_col() + scale_fill_manual(values=c(("lightblue"),("darkblue"),("pink"),("yellow"),("red"))) 
+dfa <- df |> group_by(manufacturer) |>
+  summarize(avprice = mean(price))
+ggplot(dfa,aes(manufacturer,avprice))+geom_col() + scale_fill_manual(values=c(("lightblue"),("darkblue"),("pink"),("yellow"),("red")))
+```
+
+From this we can clearly see that a car manufactured by ford is on average more expensive than the others in comparisions, and one manufactured by honda is cheaper.
+
+**Manufacturer and Cylinders** A bar graph showing the relationship between manufacturers and cylinders.
+
+```{r}
+df<- subset (df, manufacturer %in% c("ford", "honda", "toyota", "chevrolet", "nissan"))
+ggplot(df, aes(x = manufacturer, fill=cylinders)) + 
+    geom_bar(stat = "count") 
+```
+
+Chevrolet and Ford have produced a majority of cars their cars with 8 cylinders whereas cars with 3 cylinders are prevalent in honda,nissan, and toyota.We can also see that cylinders are often not mentioned from the glaring red patches in each column.
+
+**Odometer and Size** A box plot showing the rlationship between type of car and odometer, with outliers removed for accuracy.
+
+```{r}
+dfC<- subset (df, size %in% c("compact", "full-size", "mid-size", "sub-compact"))
+dfC |> ggplot(aes(size,odometer))+geom_boxplot(outlier.shape=NA)+  scale_y_continuous(limits = quantile(df$odometer, c(0.1, 0.8),na.rm=TRUE))
+```
+
+We can see how the median of the odometer values for all types of cars is very similar.
+
+**Type and Price**
+
+```{r}
+df <- df[df$price<500000&df$price>500,]
+df<- subset (df, type %in% c("pickup", "sedan", "SUV", "truck", "hatchback"))
+ggplot(df,aes(type,price)) + geom_violin(scale = "area")
+
+```
+
+The above violin plot demonstrates a visual representation of the distribution of the price of vehicle based on the type of vehicle, from the violin plot we can infer the median, interquartile range, and the shape of the distribution of prices of vehicles based on vehicle type. For example a pickup vehicle will have a higher mean and median price compared to a sedan.
+
+**Vehicle type and Fuel Type**
+
+```{r}
+df<- subset (df, type %in% c("pickup", "sedan", "SUV", "truck", "hatchback"))
+ggplot(df, aes(type, fuel)) + geom_count()
+```
+
+# Regression Analysis
+
+```{r}
+plot(df$year,df$price,col = "black",main = "Price and Year",
+abline(lm(df$year~df$price)),cex = 1.3,pch = 1,xlab = "Year",ylab = "Price")
+```
+
+This linear model demonstrates the distribution of price and year. Furthermore, this linear model demonstrates that the distribution for price and odometer is significantly not normally distributed as there is a significant amount of outliers found throughout the model, giving the model a non linear appearance.
+
+```{r}
+plot(df$price,df$odometer,col = "black",main = "Price and Odometer",
+abline(lm(df$price~df$odometer)),cex = 1.3,pch = 1,xlab = "Price",ylab = "Odometer")
+```
+
+This linear model demonstrates the distribution of price and odometer. Furthermore, this linear model demonstrates that the distribution for price and odometer is significally normally distributed, however, there is a significant amount of outliers found mostly within the price range of 0 to 20000.
+
+```{r}
+library(caret)
+library(leaps)
+```
+
+```{r}
+library(ggplot2)
+
+model <- lm(price ~ type + cylinders + drive, data = df)
+
+summary(model)
+```
+
+# Regression Diagnostics
+
+**Residuals and Fitted Values**
+
+```{r}
+model <- lm(price ~ year + odometer + cylinders + condition + fuel + transmission + drive + size + type, data = df)
+
+plot(model$fitted.values, model$residuals,
+     xlab = "Fitted Values", ylab = "Residuals",
+     main = "Residuals and Fitted Values")
+```
+
+The Residuals and Fitted Values plot demonstrates the residuals in comparison to the the fitted values from the linear regression model. Some kind of a linear relationship is demonstrated by the plot as the points do not go below a certain defined line.
+
+We expect to see no clear patterns in the plot, which indicates that the linear regression model is appropriate for the data. If there is a clear pattern, it suggests that the linear regression model may not be appropriate.
+
+**Normal Q Q Plot**
+
+```{r}
+qqnorm(model$residuals)
+qqline(model$residuals)
+```
+
+The Normal Q Q Plot demonstrates whether the residuals are normally distributed in the data. The relatively straight line between all the points indicates that the residuals are normally distributed. We only see significant deviation from the straight line at starting near the theoretical quantity of 2.
+
+**Scale Location Plot**
+
+```{r}
+plot(sqrt(abs(model$residuals)), model$fitted.values,
+     xlab = "Absolute Residuals", ylab = "Fitted Values",
+     main = "Scale Location Plot")
+
+abline(lm(sqrt(abs(model$residuals)) ~ model$fitted.values), col = "blue")
+```
+
+The Scale Location Plot demonstrates the square root of the absolute residuals against the fitted values. There is no clear pattern between fitted values and the absolute residuals demonstrating significant variance, however, the points seem to not go below a linear line that is concaving down.
+
+**Residuals and Leverage Plot**
+
+```{r}
+plot(model, which = 5)
+```
+
+The Residuals and Leverage plot shows the leverage of each point compared to its standardized residuals. Most points are found in between 0.0 and 0.002 on the x-axis demonstrating the leverage. Additionally, most points do not fall near the line. Ultimately, demonstrating that the points significantly impact the regression line.
